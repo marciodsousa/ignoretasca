@@ -228,50 +228,80 @@ var ready = (function(){
   return ready;
 })();
 
+
+var port = chrome.runtime.connect();
+
+window.addEventListener("message", function(event) {
+  // We only accept messages from ourselves
+  if (event.source != window)
+    return;
+
+  if (event.data.type && (event.data.type == "FROM_PAGE")) {
+    console.log("Content script received: " + event.data.text);
+    port.postMessage(event.data.text);
+
+    showUserContent(event.data.text);
+  }
+}, false);
+
+
 ready(() => {
-  getIgnoredData(savedItems => {
-    if (savedItems){
-      processIgnoredUsers(savedItems);
-      ignotedData = savedItems;
-    }
-  })
+    getIgnoredData(savedItems => {
+        if (savedItems){
+            processIgnoredUsers(savedItems);
+            ignotedData = savedItems;
+        }
+    });
 
-  for (let commentActionDOM of document.getElementsByClassName("comment-actions")) {
-    commentActionDOM.insertAdjacentHTML('afterend', '<a rel="nofollow" class="comment-block-user" style="font-size: 1rem; text-transform: uppercase; font-weight: 700; margin-top: 14px;" aria-label="Bloquear Nuno, o Crente em Jesus">SHIUUUUU</a>');
-  }
+    $(document).on("click", ".comment-block-user", (event) => {
+        var commentHeader = $(event.currentTarget).parents(".comment-header");
+        var userName = $(commentHeader).children("cite").text();
+        ignoreUser(userName)
+    });
 
-  for (let commentBlockUserDOM of document.getElementsByClassName("comment-block-user")) {
-    commentBlockUserDOM.addEventListener("click", function(){
-      var commentHeader = this.parentNode;
-      var userName = commentHeader.getElementsByTagName("cite")[0].innerHTML.trim().toLowerCase();
-      ignoreUser(userName)
-    });   
-  }
-
-})
+    $(".comment-actions").each((position, item) => {
+        $(item).append('<a rel="nofollow" class="comment-block-user" style="font-size: 1rem; text-transform: uppercase; font-weight: 700; margin-top: 14px;" aria-label="Bloquear Nuno, o Crente em Jesus">SHIUUUUU</a>');
+    });
+});
 
 function ignoreUser(userName) {
-  const currentUserData = ignoredData[userName] ? ignoredData[userName] : {userName, ignoredSince: Date.now()};
-  ignoredData[userName] = currentUserData;
-  updateIgnoredData(ignoredData);
-  hideUserContent({userName});
+    const uniqueUsername = userName.toLowerCase().trim().replace(" ", "");
+    const currentUserData = ignoredData[uniqueUsername] ? ignoredData[uniqueUsername] : {uniqueUsername, userName, ignoredSince: Date.now()};
+
+    ignoredData[uniqueUsername] = currentUserData;
+
+    updateIgnoredData(ignoredData);
+    hideUserContent({uniqueUsername});
 }
 
 function processIgnoredUsers (usersData) {
-  Object.keys(usersData).forEach(userName => {
-    hideUserContent(usersData[userName]);
+  Object.keys(usersData).forEach(uniqueUsername => {
+    hideUserContent(usersData[uniqueUsername]);
   });
 }
 
-function hideUserContent({userName, ignoreWholeThread = true}) 
+function hideUserContent({uniqueUsername, ignoreWholeThread = true}) 
 {
-  for (let commentHeaderDOM of document.getElementsByClassName("comment-header")) {
-    const commentUsername = commentHeaderDOM.getElementsByTagName("cite")[0].innerHTML.trim().toLowerCase();
+    $("cite").each((position, item)=>{
+        const $itemElement = $(item);
 
-    if(commentUsername === userName) {
-      commentHeaderDOM.parentNode.parentNode.parentNode.style.display = 'none';
-    }
-  }
+        if ($itemElement.text().toLowerCase().trim().replace(" ", "") === uniqueUsername){
+            $itemElement.parents("li.comment").first().hide();
+        }
+    })
+
+}
+
+function showUserContent({uniqueUsername, ignoreWholeThread = true}) 
+{
+    $("cite").each((position, item)=>{
+        const $itemElement = $(item);
+
+        if ($itemElement.text().toLowerCase().trim().replace(" ", "") === uniqueUsername){
+            $itemElement.parents("li.comment").first().show();
+        }
+    })
+
 }
 
 function getIgnoredData(callback) {
@@ -279,7 +309,20 @@ function getIgnoredData(callback) {
 }
 
 function updateIgnoredData(dataToSave) {
-  chrome.storage.sync.set({ "ignoredData": dataToSave });
+    chrome.storage.sync.set({ "ignoredData": dataToSave });
+
+    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+        chrome.tabs.sendMessage(tabs[0].id, {type:"ignoreUser", userName: dataToSave.uniqueUsername});
+    });
 }
 
 
+chrome.runtime.onMessage.addListener(
+    function(message, sender, sendResponse) {
+        switch(message.type) {
+            case "unignoreUser":
+            showUserContent({uniqueUsername: message.userName});
+            break;
+        }
+    }
+);
