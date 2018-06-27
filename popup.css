@@ -1,0 +1,48 @@
+.users__container {
+    width: 100%;
+}
+
+.usercard {
+    width: 100%;
+    display: block;
+    margin: 10px;
+}
+
+.usercard__info {
+    display: inline-block;
+    margin-top: 0px;
+    position: absolute;
+}
+
+.usercard__title {
+    font-weight: bold;
+    display: block;
+    font-size: 1rem
+}
+
+.usercard__subtitle {
+    display: block;
+    color: #737373;
+}
+
+.usercard__buttons {
+    display: inline-block;
+    bottom: 7px;
+    position: relative;
+}
+
+.usercard__action {
+color: grey;
+text-transform: uppercase;
+font-weight: bold;
+}
+
+.usercard__action:hover {
+color: green;
+cursor: pointer;
+}
+
+.usercard__avatar {
+    margin-right: 10px;
+    display: inline;
+}

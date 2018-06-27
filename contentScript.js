@@ -254,9 +254,12 @@ ready(() => {
     });
 
     $(document).on("click", ".comment-block-user", (event) => {
-        var commentHeader = $(event.currentTarget).parents(".comment-header");
-        var userName = $(commentHeader).children("cite").text();
-        ignoreUser(userName)
+        const $commentElement = $(event.currentTarget).closest("div.comment");
+        const $commentHeader = $commentElement.find(".comment-header");
+        const userName = $commentHeader.children("cite").text();
+        const avatarUrl = $commentElement.children(".avatar").attr("src");
+
+        ignoreUser(userName, avatarUrl)
     });
 
     $(".comment-actions").each((position, item) => {
@@ -264,13 +267,13 @@ ready(() => {
     });
 });
 
-function ignoreUser(userName) {
+function ignoreUser(userName, avatarUrl = "") {
     const uniqueUsername = userName.toLowerCase().trim().replace(" ", "");
-    const currentUserData = ignoredData[uniqueUsername] ? ignoredData[uniqueUsername] : {uniqueUsername, userName, ignoredSince: Date.now()};
+    const currentUserData = ignoredData[uniqueUsername] ? ignoredData[uniqueUsername] : {uniqueUsername, userName, avatarUrl, ignoredSince: Date.now()};
 
     ignoredData[uniqueUsername] = currentUserData;
 
-    updateIgnoredData(ignoredData);
+    updateIgnoredData();
     hideUserContent({uniqueUsername});
 }
 
@@ -308,12 +311,9 @@ function getIgnoredData(callback) {
   chrome.storage.sync.get(/* String or Array */["ignoredData"], (savedData) => callback(savedData.ignoredData));
 }
 
-function updateIgnoredData(dataToSave) {
-    chrome.storage.sync.set({ "ignoredData": dataToSave });
-
-    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-        chrome.tabs.sendMessage(tabs[0].id, {type:"ignoreUser", userName: dataToSave.uniqueUsername});
-    });
+function updateIgnoredData() {
+    chrome.storage.sync.set({ ignoredData });
+    chrome.runtime.sendMessage( {type:"ignoreDataUpdated"});
 }
 
 
@@ -322,7 +322,11 @@ chrome.runtime.onMessage.addListener(
         switch(message.type) {
             case "unignoreUser":
             showUserContent({uniqueUsername: message.userName});
+            delete ignoredData[message.userName];
+            updateIgnoredData();
             break;
         }
     }
 );
+
+
