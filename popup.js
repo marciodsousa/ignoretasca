@@ -14,7 +14,7 @@ chrome.runtime.onMessage.addListener(
     function(message, sender, sendResponse) {
         switch(message.type) {
             case "ignoreDataUpdated":
-            chrome.storage.sync.get(/* String or Array */["ignoredData"], onIgnoredDataFetched);
+            chrome.storage.sync.get("ignoredData", onIgnoredDataFetched);
             break;
         }
     }
@@ -22,15 +22,20 @@ chrome.runtime.onMessage.addListener(
 
 
 function onIgnoredDataFetched(items) {
-  //  items = [ { "yourBody": "myBody" } ]
-  const $userContainer = $(".user__container");
-  $userContainer.html("");
+    const $userContainer = $(".user__container");
+    $userContainer.html("");
 
-  $.each(items.ignoredData, userName => {
-      const userData = items.ignoredData[userName];
-      $userContainer
-      .append(templateUserCard(userData));
-  });
+    if(!Object.keys(items.ignoredData).length) {
+        $userContainer.append(emptyStateTemplate());
+    } else {
+        $.each(items.ignoredData, userName => {
+            const userData = items.ignoredData[userName];
+
+            $userContainer
+            .append(templateUserCard(userData));
+        });
+    }
+
 }
 
 function templateUserCard(userData) {
@@ -46,4 +51,8 @@ function templateUserCard(userData) {
         + '</div>'
         + '<div class="usercard__buttons"><span class="usercard__action">Fazer as Pazes</button></div>'
     + '</div>';
+}
+
+function emptyStateTemplate() {
+    return '<div class="user__container--empty"><span>Nenhum utilizador ignorado.</span></div>';
 }

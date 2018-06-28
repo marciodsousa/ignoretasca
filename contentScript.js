@@ -1,4 +1,4 @@
-var ignoredData = {};
+let ignoredData = {};
 
 debugger;
 var ready = (function(){
@@ -249,7 +249,7 @@ ready(() => {
     getIgnoredData(savedItems => {
         if (savedItems){
             processIgnoredUsers(savedItems);
-            ignotedData = savedItems;
+            ignoredData = savedItems;
         }
     });
 
@@ -263,7 +263,8 @@ ready(() => {
     });
 
     $(".comment-actions").each((position, item) => {
-        $(item).append('<a rel="nofollow" class="comment-block-user" style="font-size: 1rem; text-transform: uppercase; font-weight: 700; margin-top: 14px;" aria-label="Bloquear Nuno, o Crente em Jesus">SHIUUUUU</a>');
+        $(item).prepend(blockUserActionButtonTemplate({}));
+        $(item).find('.comment-reply-link').css('display', 'inline');
     });
 });
 
@@ -308,7 +309,7 @@ function showUserContent({uniqueUsername, ignoreWholeThread = true})
 }
 
 function getIgnoredData(callback) {
-  chrome.storage.sync.get(/* String or Array */["ignoredData"], (savedData) => callback(savedData.ignoredData));
+  chrome.storage.sync.get("ignoredData", (savedData) => callback(savedData.ignoredData));
 }
 
 function updateIgnoredData() {
@@ -330,3 +331,6 @@ chrome.runtime.onMessage.addListener(
 );
 
 
+function blockUserActionButtonTemplate(userData) {
+    return '<a rel="nofollow" class="comment-block-user" style="display: inline; margin-right: 20px;" aria-label="Bloquear '+ userData.userName +'"></a>';
+}
