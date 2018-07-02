@@ -1,1 +1,11 @@
-.single .featured-media .mejs-mute button { background-image: url(images/icons/2x/audio/audio-mute.png); }
+.comment-block-user {
+    display: inline; 
+    margin-right: 20px;
+}
+
+.comment-block-user:hover {
+    background-color: #c33a3a !important;
+    cursor: pointer;
+    display: inline; 
+    margin-right: 20px;
+}

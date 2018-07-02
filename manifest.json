@@ -1,12 +1,13 @@
 {
 	"manifest_version": 2,
-	"name": "Ignore trolls das Tasca",
-	"description": "Serve para ignorar trolls da Tasca do Cherba",
+	"name": "Tasca+",
+	"description": "Ferramenta com funcionalidade extra para o blog \"A Tasca do Cherba\"",
 	"version": "1.0",
   "content_scripts": [
     {
       "matches": ["http://atascadocherba.com/*"],
 			"js": ["jquery-3.3.1.min.js","contentScript.js"],
+			"css": ["contentStyle.css"],
 			"run_at": "document_end"
     }
 	],
@@ -19,5 +20,8 @@
 	},
 	"permissions": [
 			"storage"
+	],
+	"web_accessible_resources": [
+		"block2.png"
 	]
 }
